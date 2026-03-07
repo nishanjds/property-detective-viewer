@@ -129,7 +129,7 @@
       return;
     }
 
-    const imageUrl = decodeURIComponent(rawUrl);
+    const imageUrl = rawUrl; // URLSearchParams.get() already decodes once
     const img      = document.getElementById('photo');
 
     // Show title bar

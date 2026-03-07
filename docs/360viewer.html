@@ -71,7 +71,7 @@
 
     pannellum.viewer('viewer', {
       type: 'equirectangular',
-      panorama: decodeURIComponent(imageUrl),
+      panorama: imageUrl, // URLSearchParams.get() already decodes once
       autoLoad: true,
       autoRotate: -2,
       compass: false,
