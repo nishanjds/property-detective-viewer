@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Viewer — Property Detective</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.7/dist/viewer.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.7/dist/viewer.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #0d1117;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #container { display: none; }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: #e6edf3;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading p { font-size: 0.85rem; opacity: 0.5; }
+
+    #error {
+      display: none;
+      position: fixed;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #e6edf3;
+      text-align: center;
+      padding: 24px;
+    }
+    #error svg { opacity: 0.4; }
+    #error h2 { font-size: 1.1rem; font-weight: 600; }
+    #error p  { font-size: 0.85rem; opacity: 0.6; max-width: 320px; }
+
+    #title-bar {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px;
+      z-index: 9999;
+      letter-spacing: 0.2px;
+    }
+
+    #branding {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      pointer-events: none;
+      letter-spacing: 0.3px;
+      z-index: 9999;
+    }
+
+    /* Override viewer.js toolbar position so it clears our branding */
+    .viewer-toolbar { bottom: 36px !important; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Loading image...</p>
+</div>
+
+<div id="error">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+  <h2 id="error-title">No image URL provided</h2>
+  <p id="error-msg">Open this page with a <code>?url=</code> query parameter pointing to an image.</p>
+</div>
+
+<div id="title-bar"></div>
+<div id="container"><img id="photo" alt="Property photo" /></div>
+<div id="branding">Property Detective</div>
+
+<script>
+  (function () {
+    const params  = new URLSearchParams(window.location.search);
+    const rawUrl  = params.get('url');
+    const title   = params.get('title') || '';
+
+    function showError(heading, msg) {
+      document.getElementById('loading').style.display = 'none';
+      const el = document.getElementById('error');
+      el.style.display = 'flex';
+      document.getElementById('error-title').textContent = heading;
+      document.getElementById('error-msg').textContent   = msg;
+    }
+
+    if (!rawUrl) {
+      showError('No image URL provided',
+        'Open this page with a ?url= query parameter pointing to an image.');
+      return;
+    }
+
+    const imageUrl = decodeURIComponent(rawUrl);
+    const img      = document.getElementById('photo');
+
+    // Show title bar
+    if (title) {
+      const bar = document.getElementById('title-bar');
+      bar.textContent = title;
+      bar.style.display = 'block';
+    }
+
+    img.onload = function () {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('container').style.display = 'block';
+
+      const viewer = new Viewer(img, {
+        inline: false,
+        viewed() { viewer.zoomTo(1); },
+        toolbar: {
+          zoomIn: true,
+          zoomOut: true,
+          oneToOne: true,
+          reset: true,
+          rotateLeft: true,
+          rotateRight: true,
+          flipHorizontal: false,
+          flipVertical: false,
+        },
+        navbar: false,
+        title: false,
+        backdrop: false,
+        keyboard: true,
+        movable: true,
+        zoomable: true,
+        rotatable: true,
+        scalable: false,
+        fullscreen: true,
+        loading: false,
+      });
+
+      viewer.show();
+    };
+
+    img.onerror = function () {
+      showError('Could not load image',
+        'The image may have expired or is not publicly accessible. Try regenerating the PDF.');
+    };
+
+    img.src = imageUrl;
+  })();
+</script>
+
+</body>
+</html>
