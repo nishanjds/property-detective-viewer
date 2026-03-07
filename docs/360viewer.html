@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360° Photo Viewer — Property Detective</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #0d1117; font-family: sans-serif; }
+
+    #viewer { width: 100%; height: 100vh; }
+
+    #error {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0d1117;
+      color: #e6edf3;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+      padding: 24px;
+    }
+    #error svg { opacity: 0.4; }
+    #error h2 { font-size: 1.1rem; font-weight: 600; }
+    #error p  { font-size: 0.85rem; opacity: 0.6; max-width: 320px; }
+
+    #branding {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      pointer-events: none;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="viewer"></div>
+
+<div id="error">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+  <h2>No image URL provided</h2>
+  <p>Open this page with a <code>?url=</code> query parameter pointing to a 360° equirectangular image.</p>
+</div>
+
+<div id="branding">Property Detective</div>
+
+<script>
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const imageUrl = params.get('url');
+
+    if (!imageUrl) {
+      document.getElementById('error').style.display = 'flex';
+      return;
+    }
+
+    pannellum.viewer('viewer', {
+      type: 'equirectangular',
+      panorama: decodeURIComponent(imageUrl),
+      autoLoad: true,
+      autoRotate: -2,
+      compass: false,
+      showFullscreenCtrl: true,
+      showZoomCtrl: true,
+      mouseZoom: true,
+      title: params.get('title') || '',
+      hotSpotDebug: false,
+    });
+  })();
+</script>
+
+</body>
+</html>
