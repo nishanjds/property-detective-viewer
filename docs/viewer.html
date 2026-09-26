@@ -163,9 +163,13 @@
 
 <script>
 (function () {
-  const params  = new URLSearchParams(window.location.search);
-  const rawUrl  = params.get('url');
-  const title   = params.get('title') || '';
+  // Links put the params in the #fragment, which is never sent to a server;
+  // older PDFs used ?query, so fall back to it.
+  const hash    = new URLSearchParams(window.location.hash.slice(1));
+  const query   = new URLSearchParams(window.location.search);
+  const param   = (k) => hash.get(k) ?? query.get(k);
+  const rawUrl  = param('url');
+  const title   = param('title') || '';
 
   // ── State ────────────────────────────────────────────────────
   let scale = 1, minScale = 0.5, maxScale = 8;
@@ -243,7 +247,12 @@
   }
 
   if (!rawUrl) {
-    showError('No image URL provided', 'Open this page with a ?url= query parameter.');
+    showError('No image URL provided', 'Open this page with a #url= parameter.');
+    return;
+  }
+  // Only the app's own photos (getDownloadURL always returns this host).
+  if (!rawUrl.startsWith('https://firebasestorage.googleapis.com/')) {
+    showError('Unsupported image link', 'This viewer only opens Property Detective photos.');
     return;
   }
 

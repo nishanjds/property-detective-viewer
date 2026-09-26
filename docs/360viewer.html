@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360° Photo Viewer — Property Detective</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
-  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"
+    integrity="sha384-02yn80EH0cF+s23taAmuhEZ04p3CTbQvV0QZMr2reUxajpfvcLNKlzsPkZwx14mf" crossorigin="anonymous" />
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"
+    integrity="sha384-S5+w/JlcNAOymqXGNrvzn2F++XsaHTJdex6KE5VbKryfFgqJiRUJOgOkUqaiOZTf" crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; background: #0d1117; font-family: sans-serif; }
@@ -53,32 +55,48 @@
     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
     <line x1="12" y1="16" x2="12.01" y2="16"/>
   </svg>
-  <h2>No image URL provided</h2>
-  <p>Open this page with a <code>?url=</code> query parameter pointing to a 360° equirectangular image.</p>
+  <h2 id="err-title">No image URL provided</h2>
+  <p id="err-msg">Open this page with a #url= parameter pointing to a 360° equirectangular image.</p>
 </div>
 
 <div id="branding">Property Detective</div>
 
 <script>
   (function () {
-    const params = new URLSearchParams(window.location.search);
-    const imageUrl = params.get('url');
+    // Links put the params in the #fragment, which is never sent to a server;
+    // older PDFs used ?query, so fall back to it.
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const query = new URLSearchParams(window.location.search);
+    const param = (k) => hash.get(k) ?? query.get(k);
+    const imageUrl = param('url');
+
+    function showError(title, msg) {
+      document.getElementById('err-title').textContent = title;
+      document.getElementById('err-msg').textContent = msg;
+      document.getElementById('error').style.display = 'flex';
+    }
 
     if (!imageUrl) {
       document.getElementById('error').style.display = 'flex';
+      return;
+    }
+    // Only the app's own photos (getDownloadURL always returns this host).
+    if (!imageUrl.startsWith('https://firebasestorage.googleapis.com/')) {
+      showError('Unsupported image link', 'This viewer only opens Property Detective photos.');
       return;
     }
 
     pannellum.viewer('viewer', {
       type: 'equirectangular',
       panorama: imageUrl, // URLSearchParams.get() already decodes once
+      escapeHTML: true, // pannellum writes the title with innerHTML otherwise
       autoLoad: true,
       autoRotate: -2,
       compass: false,
       showFullscreenCtrl: true,
       showZoomCtrl: true,
       mouseZoom: true,
-      title: params.get('title') || '',
+      title: param('title') || '',
       hotSpotDebug: false,
     });
   })();
